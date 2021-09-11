@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>CodePen - Guitar Chord Transposer</title>
+  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css'>
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<div ng-app='transposer' ng-controller='transposer' class='container'>
+  <h1>Guitar chord transposer</h1>
+  <div class='row'>
+    <div class='col-md-6 col-xs-12'>
+      <p><label for='original'>Input</label></p>
+      <textarea id='original'
+                rows='30'
+                class='code'
+                ng-model='input'
+                style='width:100%;font-family:monospace;'
+                ></textarea>
+    </div>
+    <div class='col-md-6 col-xs-12'>
+      <p><label for='distance'>Transpose By</label></p>
+      <input class='form-control'
+             ng-model='distance'
+             type='number' />
+      <p><label for='original'>Output</label></p>
+      <pre>{{transposeTab(input, distance)}}</pre>
+    </div>
+  </div>
+</div>
+<!-- partial -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.2/angular.js'></script>
+<script>
+'use strict';
+
+var noteIds = {
+  'A': 0,  'A#': 1,  'Bb': 1,  'B': 2,  'C': 3,  'C#': 4,
+  'Db': 4,  'D': 5,  'D#': 6,  'Eb': 6,  'E': 7,  'F': 8,
+  'F#': 9,  'Gb': 9,  'G': 10,  'G#': 11,  'Ab': 11,
+};
+
+var noteNames = [
+  'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#',
+];
+
+var chordRegex = /\b[A-Ga-g][#b]?(sus|m|maj)?[2-9]?(\/[A-G][#b]?)?(?=\s|$)/g;
+var noteRegex = /\b[A-G][#b]?/g;
+
+function isChords(line) {
+  var threshold = 0.5;
+  var chordText = (line.match(chordRegex) || []).join('');
+  var chords = chordText.length;
+  var notChordText = line.replace(chordRegex, '').replace(/\s/g,'');
+  var notChords = notChordText.length
+  //console.log('"' + chordText + '" vs "' + notChordText + '"')
+  return chords > notChords;
+}
+
+function transpose(chord, distance) {
+  return chord.replace(noteRegex, function(note) {
+    return noteNames[(noteIds[note] + distance) % 12]
+  });
+}
+
+function transposeTab(text, distance) {
+  return text
+    .split('\n')
+    .map(function(line) {
+      return isChords(line) ?
+        line.replace(chordRegex, function (chord) {
+          return transpose(chord, distance)
+      }) :
+        line;
+    })
+    .join('\n');
+}
+
+angular.module('transposer', [])
+.run(function() { console.clear(); })
+.controller('transposer', function($scope) {
+  $scope.input = 'G  D';
+  $scope.output = '';
+  $scope.distance = 2;
+  $scope.transposeTab = transposeTab;
+});
+</script>
+</body>
+</html>
